@@ -4,41 +4,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CounterForge</title>
 <style>
-body { font-family: Arial; background:#0d0d0d; color:white; text-align:center; }
-select, button { padding:10px; margin:10px; font-size:16px; }
+body { margin:0; font-family: Arial; background:#0b0b0b; color:white; }
+.container { padding:20px; max-width:500px; margin:auto; }
+select, input, button {
+  width:100%; padding:12px; margin-top:10px; font-size:16px;
+  border-radius:8px; border:none;
+}
+button { background:#4f46e5; color:white; }
+.card { margin-top:20px; background:#1a1a1a; padding:15px; border-radius:10px; }
+.badge { display:inline-block; background:#333; padding:5px 10px; margin:5px; border-radius:6px; }
 </style>
 </head>
+
 <body>
+<div class="container">
 
 <h2>CounterForge</h2>
 
-<select id="champ">
-  <option>Jax</option>
-  <option>Yasuo</option>
-  <option>Zed</option>
-  <option>Irelia</option>
-</select>
+<input id="search" placeholder="Search champion..." oninput="filter()">
 
-<br>
+<select id="champ"></select>
 
 <button onclick="go()">Find counters</button>
 
 <div id="out"></div>
 
+</div>
+
 <script>
+// základná databáza (sem sa dá neskôr napojiť Riot API)
 const data = {
-  Jax: ["Poppy", "Gragas", "Malphite"],
-  Yasuo: ["Malzahar", "Annie", "Renekton"],
-  Zed: ["Lissandra", "Malzahar", "Fizz"],
-  Irelia: ["Sett", "Garen", "Jax"]
+  Jax: { counters:["Poppy","Gragas","Malphite"], score:[9.5,9.2,8.8] },
+  Yasuo: { counters:["Malzahar","Annie","Renekton"], score:[9.8,9.0,8.5] },
+  Zed: { counters:["Lissandra","Malzahar","Fizz"], score:[9.7,9.1,8.6] },
+  Irelia: { counters:["Sett","Garen","Jax"], score:[9.6,9.0,8.7] },
+  Darius: { counters:["Quinn","Vayne","Teemo"], score:[9.8,9.3,8.9] },
+  Fiora: { counters:["Malphite","Gragas","Shen"], score:[9.4,9.1,8.8] }
 };
 
-function go(){
-  let c = document.getElementById("champ").value;
+let champs = Object.keys(data);
+let sel = document.getElementById("champ");
 
-  document.getElementById("out").innerHTML =
-    "<h3>Vs " + c + ":</h3>" +
-    data[c].map(x => "• " + x).join("<br>");
+function load(){
+  sel.innerHTML = champs.map(c => `<option>${c}</option>`).join("");
+}
+load();
+
+function filter(){
+  let v = document.getElementById("search").value.toLowerCase();
+  sel.innerHTML = champs
+    .filter(c => c.toLowerCase().includes(v))
+    .map(c => `<option>${c}</option>`)
+    .join("");
+}
+
+function go(){
+  let c = sel.value;
+  let d = data[c];
+
+  if(!d){
+    document.getElementById("out").innerHTML = "No data yet";
+    return;
+  }
+
+  let html = `<div class='card'>
+    <h3>Vs ${c}</h3>
+    ${d.counters.map((x,i)=>
+      `<div class='badge'>${x} (${d.score[i]}/10)</div>`
+    ).join("")}
+  </div>`;
+
+  document.getElementById("out").innerHTML = html;
 }
 </script>
 
