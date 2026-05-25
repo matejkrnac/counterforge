@@ -2,20 +2,21 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CounterForge PRO</title>
+<title>CounterForge ULTIMATE</title>
 
 <style>
-body { margin:0; font-family:Arial; background:#0b0b0b; color:white; }
+body { margin:0; font-family:Arial; background:#0a0a0a; color:white; }
 .container { padding:16px; max-width:520px; margin:auto; }
 input, select, button {
   width:100%; padding:12px; margin-top:10px;
   border-radius:10px; border:none; font-size:16px;
 }
-button { background:#4f46e5; color:white; }
-.card { margin-top:15px; background:#1a1a1a; padding:14px; border-radius:12px; }
+button { background:#6366f1; color:white; }
+.card { margin-top:15px; background:#151515; padding:14px; border-radius:12px; }
 .badge { display:inline-block; margin:5px; padding:6px 10px; background:#2a2a2a; border-radius:8px; }
 .small { font-size:12px; opacity:0.7; }
-.row { display:flex; gap:10px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+hr { border:0; border-top:1px solid #333; margin:10px 0; }
 </style>
 </head>
 
@@ -23,13 +24,13 @@ button { background:#4f46e5; color:white; }
 
 <div class="container">
 
-<h2>CounterForge PRO</h2>
+<h2>CounterForge ULTIMATE</h2>
 
 <input id="search" placeholder="Search champion..." oninput="filter()">
 
 <select id="champ"></select>
 
-<button onclick="analyze()">Analyze draft</button>
+<button onclick="analyze()">Analyze Draft</button>
 
 <div id="out"></div>
 
@@ -39,55 +40,103 @@ button { background:#4f46e5; color:white; }
 
 let champs = [];
 
-// LOAD ALL CHAMPS (REAL DATA)
+// LOAD ALL CHAMPIONS (REAL DATA)
 fetch("https://ddragon.leagueoflegends.com/cdn/14.1.1/data/en_US/champion.json")
 .then(r => r.json())
 .then(data => {
   champs = Object.keys(data.data).sort();
   document.getElementById("champ").innerHTML =
-    champs.map(c => `<option>${c}</option>`).join("");
+    champs.map(c=>`<option>${c}</option>`).join("");
 });
 
-// PRO MATCHUP ENGINE (scalable)
-function getCounters(champ){
 
-  // simplified scoring system (later: Riot API / dataset)
-  const base = [
-    {name:"Malphite", score:9.7, type:"tank counter"},
-    {name:"Poppy", score:9.5, type:"dash counter"},
-    {name:"Gragas", score:9.3, type:"flex pick"},
-    {name:"Lissandra", score:9.1, type:"anti-assassin"},
-    {name:"Sett", score:8.8, type:"lane bully"},
-    {name:"Annie", score:8.6, type:"burst control"}
-  ];
+// =========================
+// CORE ENGINE (ULTIMATE)
+// =========================
 
-  return base.sort((a,b)=>b.score-a.score).slice(0,4);
+// role assumptions (simplified meta logic)
+const roleBias = {
+  assassin: ["Zed","Katarina","Fizz","Talon"],
+  tank: ["Malphite","Ornn","Sion","Shen"],
+  bruiser: ["Jax","Darius","Irelia","Renekton"]
+};
+
+// counter logic engine (weighted)
+function scoreCounter(enemy, pick){
+  let score = 7.0;
+
+  // simple logic rules
+  if(["Malphite","Ornn","Sion"].includes(pick)) score += 1.2;
+  if(["Lissandra","Annie","Malzahar"].includes(pick) && enemy==="Zed") score += 1.5;
+  if(["Poppy","Gragas"].includes(pick)) score += 1.3;
+  if(["Vayne","Quinn"].includes(pick) && enemy==="Jax") score += 1.4;
+
+  // generic scaling penalty
+  if(["Yasuo","Irelia","Fiora"].includes(enemy) && pick==="Teemo") score -= 0.5;
+
+  return Math.min(10, score.toFixed(1));
 }
 
-// ANALYZE DRAFT
+// COUNTER POOL ENGINE
+function getCounters(enemy){
+
+  const pool = [
+    "Malphite","Poppy","Gragas","Lissandra","Annie",
+    "Sett","Garen","Teemo","Vayne","Quinn","Shen","Ornn"
+  ];
+
+  return pool.map(p => ({
+    name:p,
+    score:scoreCounter(enemy,p)
+  }))
+  .sort((a,b)=>b.score-a.score)
+  .slice(0,5);
+}
+
+// DRAFT ANALYZER (TEAM LOGIC)
 function analyze(){
-  let c = document.getElementById("champ").value;
-  let counters = getCounters(c);
+  let enemy = document.getElementById("champ").value;
+
+  let counters = getCounters(enemy);
+
+  let banSuggestion =
+    enemy==="Yasuo" ? "Ban: Yasuo (high snowball risk)" :
+    enemy==="Zed" ? "Ban: Zed (soloQ carry threat)" :
+    "Ban: high mobility assassin";
 
   document.getElementById("out").innerHTML = `
     <div class="card">
-      <h3>VS ${c}</h3>
-      <div class="small">CounterForge PRO analysis engine</div>
+      <h3>VS ${enemy}</h3>
+      <div class="small">ULTIMATE draft engine (weighted scoring)</div>
 
-      ${counters.map(x=>`
-        <div class="badge">${x.name} • ${x.score}/10 (${x.type})</div>
+      <hr>
+
+      <b>BEST COUNTERS</b><br>
+      ${counters.map(c=>`
+        <div class="badge">${c.name} • ${c.score}/10</div>
       `).join("")}
 
-      <div class="small" style="margin-top:10px;">
-        Tip: focus on lane control + early tempo
+      <hr>
+
+      <b>BAN RECOMMENDATION</b><br>
+      <div class="badge">${banSuggestion}</div>
+
+      <hr>
+
+      <b>STRATEGY</b>
+      <div class="small">
+        • play for early tempo<br>
+        • deny mobility windows<br>
+        • force objective fights mid game
       </div>
     </div>
   `;
 }
 
-// SEARCH
+// SEARCH ENGINE
 function filter(){
   let v = document.getElementById("search").value.toLowerCase();
+
   document.getElementById("champ").innerHTML =
     champs.filter(c=>c.toLowerCase().includes(v))
     .map(c=>`<option>${c}</option>`).join("");
