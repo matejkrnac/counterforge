@@ -78,9 +78,18 @@ hr {
 <div class="container">
 
 <h2>CounterForge PRO</h2>
-<div class="small">Draft intelligence system (LIVE DATA)</div>
+<div class="small">LIVE draft intelligence system</div>
 
 <input id="search" placeholder="Search champion..." oninput="filter()">
+
+<!-- 🔥 LANE SELECT ADDED -->
+<select id="lane">
+  <option value="top">Top</option>
+  <option value="jungle">Jungle</option>
+  <option value="mid">Mid</option>
+  <option value="adc">ADC</option>
+  <option value="support">Support</option>
+</select>
 
 <select id="champ"></select>
 
@@ -95,9 +104,8 @@ hr {
 let champs = [];
 
 /* =========================
-   🔥 FIX: ALWAYS LATEST PATCH
+   🔥 LATEST PATCH LOAD
 ========================= */
-
 fetch("https://ddragon.leagueoflegends.com/api/versions.json")
 .then(r => r.json())
 .then(versions => {
@@ -117,10 +125,10 @@ fetch("https://ddragon.leagueoflegends.com/api/versions.json")
 
 
 /* =========================
-   ENGINE (UNCHANGED LOGIC)
+   ENGINE (LANE AWARE)
 ========================= */
 
-function scoreCounter(enemy, pick){
+function scoreCounter(enemy, pick, lane){
 
   const antiAssassin = ["Lissandra","Malzahar","Annie","Galio"];
   const antiTank = ["Vayne","Fiora","Trundle","Kayn"];
@@ -132,12 +140,21 @@ function scoreCounter(enemy, pick){
   const isAssassin = ["Zed","Talon","Katarina","Akali","Yone"].includes(enemy);
   const isBruiser = ["Jax","Darius","Irelia","Fiora","Aatrox"].includes(enemy);
 
+  /* CORE MATCHUPS */
   if (isAssassin && antiAssassin.includes(pick)) score += 2.0;
   if (isTank && antiTank.includes(pick)) score += 1.8;
   if (isBruiser && antiBruiser.includes(pick)) score += 1.8;
 
+  /* SPECIFIC BOOSTS */
   if (enemy === "Zed" && pick === "Lissandra") score += 1.5;
   if (enemy === "Jax" && pick === "Poppy") score += 1.5;
+
+  /* 🔥 LANE LOGIC */
+  if (lane === "mid" && pick === "Lissandra") score += 1.2;
+  if (lane === "top" && pick === "Quinn") score += 1.0;
+  if (lane === "jungle" && pick === "Kayn") score += 1.0;
+  if (lane === "adc" && pick === "Vayne") score += 1.0;
+  if (lane === "support" && pick === "Lulu") score += 1.0;
 
   return Math.min(10, Number(score.toFixed(1)));
 }
@@ -147,7 +164,7 @@ function scoreCounter(enemy, pick){
    COUNTER ENGINE
 ========================= */
 
-function getCounters(enemy){
+function getCounters(enemy, lane){
 
   const pool = [
     "Malphite","Poppy","Gragas","Lissandra","Annie",
@@ -159,7 +176,7 @@ function getCounters(enemy){
   return pool
     .map(p => ({
       name: p,
-      score: scoreCounter(enemy, p)
+      score: scoreCounter(enemy, p, lane)
     }))
     .sort((a,b) => b.score - a.score)
     .slice(0,5);
@@ -173,7 +190,9 @@ function getCounters(enemy){
 function analyze(){
 
   let enemy = document.getElementById("champ").value;
-  let counters = getCounters(enemy);
+  let lane = document.getElementById("lane").value;
+
+  let counters = getCounters(enemy, lane);
 
   let ban =
     enemy === "Zed" ? "Ban Zed (high snowball assassin)" :
@@ -183,7 +202,7 @@ function analyze(){
 
   document.getElementById("out").innerHTML = `
     <div class="card">
-      <h3>VS ${enemy}</h3>
+      <h3>VS ${enemy} (${lane})</h3>
       <div class="small">LIVE patch AI draft analysis</div>
 
       <hr>
@@ -201,9 +220,9 @@ function analyze(){
       <hr>
 
       <div class="small">
-        • play for early tempo<br>
-        • avoid extended fights if behind<br>
-        • punish cooldown windows
+        • adapt lane pressure<br>
+        • play for tempo windows<br>
+        • punish cooldowns
       </div>
     </div>
   `;
