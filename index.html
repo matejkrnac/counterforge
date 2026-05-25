@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CounterForge</title>
+<style>
+body { font-family: Arial; background:#0d0d0d; color:white; text-align:center; }
+select, button { padding:10px; margin:10px; font-size:16px; }
+</style>
+</head>
+<body>
+
+<h2>CounterForge</h2>
+
+<select id="champ">
+  <option>Jax</option>
+  <option>Yasuo</option>
+  <option>Zed</option>
+  <option>Irelia</option>
+</select>
+
+<br>
+
+<button onclick="go()">Find counters</button>
+
+<div id="out"></div>
+
+<script>
+const data = {
+  Jax: ["Poppy", "Gragas", "Malphite"],
+  Yasuo: ["Malzahar", "Annie", "Renekton"],
+  Zed: ["Lissandra", "Malzahar", "Fizz"],
+  Irelia: ["Sett", "Garen", "Jax"]
+};
+
+function go(){
+  let c = document.getElementById("champ").value;
+
+  document.getElementById("out").innerHTML =
+    "<h3>Vs " + c + ":</h3>" +
+    data[c].map(x => "• " + x).join("<br>");
+}
+</script>
+
+</body>
+</html>
