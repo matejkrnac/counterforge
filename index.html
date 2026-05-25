@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CounterForge PRO</title>
 
-<!-- FONT -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -15,20 +14,10 @@ body {
   color:white;
 }
 
-/* LAYOUT */
-.container {
-  padding:20px;
-  max-width:520px;
-  margin:auto;
-}
+.container { padding:20px; max-width:520px; margin:auto; }
 
-h2 {
-  font-size:28px;
-  margin-bottom:8px;
-  letter-spacing:0.5px;
-}
+h2 { font-size:28px; margin-bottom:8px; letter-spacing:0.5px; }
 
-/* INPUTS */
 input, select {
   width:100%;
   padding:14px;
@@ -40,7 +29,6 @@ input, select {
   outline:none;
 }
 
-/* BUTTON */
 button {
   width:100%;
   padding:14px;
@@ -54,11 +42,8 @@ button {
   transition:0.2s;
 }
 
-button:hover {
-  transform: scale(1.02);
-}
+button:hover { transform: scale(1.02); }
 
-/* CARD */
 .card {
   margin-top:18px;
   background: rgba(255,255,255,0.05);
@@ -68,7 +53,6 @@ button:hover {
   backdrop-filter: blur(12px);
 }
 
-/* BADGES */
 .badge {
   display:inline-block;
   margin:6px 6px 0 0;
@@ -79,12 +63,7 @@ button:hover {
   font-size:13px;
 }
 
-/* SMALL TEXT */
-.small {
-  font-size:12px;
-  opacity:0.6;
-  margin-top:6px;
-}
+.small { font-size:12px; opacity:0.6; margin-top:6px; }
 
 hr {
   border:0;
@@ -99,7 +78,7 @@ hr {
 <div class="container">
 
 <h2>CounterForge PRO</h2>
-<div class="small">Draft intelligence system</div>
+<div class="small">Draft intelligence system (LIVE DATA)</div>
 
 <input id="search" placeholder="Search champion..." oninput="filter()">
 
@@ -116,11 +95,20 @@ hr {
 let champs = [];
 
 /* =========================
-   LOAD ALL CHAMPIONS
+   🔥 FIX: ALWAYS LATEST PATCH
 ========================= */
-fetch("https://ddragon.leagueoflegends.com/cdn/14.1.1/data/en_US/champion.json")
+
+fetch("https://ddragon.leagueoflegends.com/api/versions.json")
+.then(r => r.json())
+.then(versions => {
+
+  const latest = versions[0];
+
+  return fetch(`https://ddragon.leagueoflegends.com/cdn/${latest}/data/en_US/champion.json`);
+})
 .then(r => r.json())
 .then(data => {
+
   champs = Object.keys(data.data).sort();
 
   document.getElementById("champ").innerHTML =
@@ -196,7 +184,7 @@ function analyze(){
   document.getElementById("out").innerHTML = `
     <div class="card">
       <h3>VS ${enemy}</h3>
-      <div class="small">AI-driven draft analysis</div>
+      <div class="small">LIVE patch AI draft analysis</div>
 
       <hr>
 
