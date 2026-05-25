@@ -2,20 +2,39 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CounterForge ULTIMATE</title>
+<title>CounterForge PRO</title>
 
 <style>
-body { margin:0; font-family:Arial; background:#0a0a0a; color:white; }
+body { margin:0; font-family:Arial; background:#0b0b0b; color:white; }
 .container { padding:16px; max-width:520px; margin:auto; }
+
 input, select, button {
-  width:100%; padding:12px; margin-top:10px;
-  border-radius:10px; border:none; font-size:16px;
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:none;
+  font-size:16px;
 }
-button { background:#6366f1; color:white; }
-.card { margin-top:15px; background:#151515; padding:14px; border-radius:12px; }
-.badge { display:inline-block; margin:5px; padding:6px 10px; background:#2a2a2a; border-radius:8px; }
+
+button { background:#4f46e5; color:white; }
+
+.card {
+  margin-top:15px;
+  background:#151515;
+  padding:14px;
+  border-radius:12px;
+}
+
+.badge {
+  display:inline-block;
+  margin:5px;
+  padding:6px 10px;
+  background:#2a2a2a;
+  border-radius:8px;
+}
+
 .small { font-size:12px; opacity:0.7; }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 hr { border:0; border-top:1px solid #333; margin:10px 0; }
 </style>
 </head>
@@ -24,7 +43,7 @@ hr { border:0; border-top:1px solid #333; margin:10px 0; }
 
 <div class="container">
 
-<h2>CounterForge ULTIMATE</h2>
+<h2>CounterForge PRO</h2>
 
 <input id="search" placeholder="Search champion..." oninput="filter()">
 
@@ -40,106 +59,126 @@ hr { border:0; border-top:1px solid #333; margin:10px 0; }
 
 let champs = [];
 
-// LOAD ALL CHAMPIONS (REAL DATA)
+/* =========================
+   LOAD ALL CHAMPIONS
+========================= */
 fetch("https://ddragon.leagueoflegends.com/cdn/14.1.1/data/en_US/champion.json")
 .then(r => r.json())
 .then(data => {
   champs = Object.keys(data.data).sort();
+
   document.getElementById("champ").innerHTML =
-    champs.map(c=>`<option>${c}</option>`).join("");
+    champs.map(c => `<option>${c}</option>`).join("");
 });
 
 
-// =========================
-// CORE ENGINE (ULTIMATE)
-// =========================
+/* =========================
+   SIMPLE DATA-DRIVEN ENGINE
+========================= */
 
-// role assumptions (simplified meta logic)
-const roleBias = {
-  assassin: ["Zed","Katarina","Fizz","Talon"],
-  tank: ["Malphite","Ornn","Sion","Shen"],
-  bruiser: ["Jax","Darius","Irelia","Renekton"]
-};
-
-// counter logic engine (weighted)
 function scoreCounter(enemy, pick){
-  let score = 7.0;
 
-  // simple logic rules
-  if(["Malphite","Ornn","Sion"].includes(pick)) score += 1.2;
-  if(["Lissandra","Annie","Malzahar"].includes(pick) && enemy==="Zed") score += 1.5;
-  if(["Poppy","Gragas"].includes(pick)) score += 1.3;
-  if(["Vayne","Quinn"].includes(pick) && enemy==="Jax") score += 1.4;
+  const antiAssassin = ["Lissandra","Malzahar","Annie","Galio"];
+  const antiTank = ["Vayne","Fiora","Trundle","Kayn"];
+  const antiBruiser = ["Quinn","Gnar","Teemo","Vayne"];
 
-  // generic scaling penalty
-  if(["Yasuo","Irelia","Fiora"].includes(enemy) && pick==="Teemo") score -= 0.5;
+  let score = 6.5;
 
-  return Math.min(10, score.toFixed(1));
+  const isTank = ["Ornn","Sion","Malphite","Shen","Zac"].includes(enemy);
+  const isAssassin = ["Zed","Talon","Katarina","Akali","Yone"].includes(enemy);
+  const isBruiser = ["Jax","Darius","Irelia","Fiora","Aatrox"].includes(enemy);
+
+  if (isAssassin && antiAssassin.includes(pick)) score += 2.0;
+  if (isTank && antiTank.includes(pick)) score += 1.8;
+  if (isBruiser && antiBruiser.includes(pick)) score += 1.8;
+
+  // bonus logic
+  if (enemy === "Zed" && pick === "Lissandra") score += 1.5;
+  if (enemy === "Jax" && pick === "Poppy") score += 1.5;
+
+  return Math.min(10, Number(score.toFixed(1)));
 }
 
-// COUNTER POOL ENGINE
+
+/* =========================
+   COUNTER ENGINE
+========================= */
+
 function getCounters(enemy){
 
   const pool = [
     "Malphite","Poppy","Gragas","Lissandra","Annie",
-    "Sett","Garen","Teemo","Vayne","Quinn","Shen","Ornn"
+    "Sett","Garen","Shen","Ornn","Teemo",
+    "Vayne","Quinn","Fiora","Trundle","Gnar",
+    "Galio","Kayn","Mordekaiser"
   ];
 
-  return pool.map(p => ({
-    name:p,
-    score:scoreCounter(enemy,p)
-  }))
-  .sort((a,b)=>b.score-a.score)
-  .slice(0,5);
+  return pool
+    .map(p => ({
+      name: p,
+      score: scoreCounter(enemy, p)
+    }))
+    .sort((a,b) => b.score - a.score)
+    .slice(0,5);
 }
 
-// DRAFT ANALYZER (TEAM LOGIC)
-function analyze(){
-  let enemy = document.getElementById("champ").value;
 
+/* =========================
+   ANALYZE DRAFT
+========================= */
+
+function analyze(){
+
+  let enemy = document.getElementById("champ").value;
   let counters = getCounters(enemy);
 
-  let banSuggestion =
-    enemy==="Yasuo" ? "Ban: Yasuo (high snowball risk)" :
-    enemy==="Zed" ? "Ban: Zed (soloQ carry threat)" :
-    "Ban: high mobility assassin";
+  let ban =
+    enemy === "Zed" ? "Ban Zed (high snowball assassin)" :
+    enemy === "Yasuo" ? "Ban Yasuo (soloQ carry)" :
+    enemy === "Irelia" ? "Ban Irelia (lane bully)" :
+    "Ban high mobility assassin";
 
   document.getElementById("out").innerHTML = `
     <div class="card">
       <h3>VS ${enemy}</h3>
-      <div class="small">ULTIMATE draft engine (weighted scoring)</div>
+      <div class="small">Data-driven counter engine</div>
 
       <hr>
 
       <b>BEST COUNTERS</b><br>
-      ${counters.map(c=>`
+      ${counters.map(c => `
         <div class="badge">${c.name} • ${c.score}/10</div>
       `).join("")}
 
       <hr>
 
-      <b>BAN RECOMMENDATION</b><br>
-      <div class="badge">${banSuggestion}</div>
+      <b>BAN</b><br>
+      <div class="badge">${ban}</div>
 
       <hr>
 
-      <b>STRATEGY</b>
       <div class="small">
         • play for early tempo<br>
-        • deny mobility windows<br>
-        • force objective fights mid game
+        • deny enemy engage windows<br>
+        • scale safe into mid game
       </div>
     </div>
   `;
 }
 
-// SEARCH ENGINE
+
+/* =========================
+   SEARCH
+========================= */
+
 function filter(){
   let v = document.getElementById("search").value.toLowerCase();
 
   document.getElementById("champ").innerHTML =
-    champs.filter(c=>c.toLowerCase().includes(v))
-    .map(c=>`<option>${c}</option>`).join("");
+    champs
+      .filter(c => c.toLowerCase().includes(v))
+      .map(c => `<option>${c}</option>`)
+      .join("");
 }
 
 </script>
