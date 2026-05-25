@@ -4,38 +4,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CounterForge PRO</title>
 
+<!-- FONT -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
-body { margin:0; font-family:Arial; background:#0b0b0b; color:white; }
-.container { padding:16px; max-width:520px; margin:auto; }
+body {
+  margin:0;
+  font-family:Inter, Arial;
+  background: radial-gradient(circle at top, #1a1a2e, #0a0a0a);
+  color:white;
+}
 
-input, select, button {
+/* LAYOUT */
+.container {
+  padding:20px;
+  max-width:520px;
+  margin:auto;
+}
+
+h2 {
+  font-size:28px;
+  margin-bottom:8px;
+  letter-spacing:0.5px;
+}
+
+/* INPUTS */
+input, select {
   width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:10px;
-  border:none;
-  font-size:16px;
-}
-
-button { background:#4f46e5; color:white; }
-
-.card {
-  margin-top:15px;
-  background:#151515;
   padding:14px;
+  margin-top:10px;
   border-radius:12px;
+  border:1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color:white;
+  outline:none;
 }
 
+/* BUTTON */
+button {
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border-radius:12px;
+  border:none;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover {
+  transform: scale(1.02);
+}
+
+/* CARD */
+.card {
+  margin-top:18px;
+  background: rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  padding:16px;
+  border-radius:16px;
+  backdrop-filter: blur(12px);
+}
+
+/* BADGES */
 .badge {
   display:inline-block;
-  margin:5px;
-  padding:6px 10px;
-  background:#2a2a2a;
-  border-radius:8px;
+  margin:6px 6px 0 0;
+  padding:8px 12px;
+  border-radius:999px;
+  background: rgba(99,102,241,0.15);
+  border:1px solid rgba(99,102,241,0.3);
+  font-size:13px;
 }
 
-.small { font-size:12px; opacity:0.7; }
-hr { border:0; border-top:1px solid #333; margin:10px 0; }
+/* SMALL TEXT */
+.small {
+  font-size:12px;
+  opacity:0.6;
+  margin-top:6px;
+}
+
+hr {
+  border:0;
+  border-top:1px solid rgba(255,255,255,0.1);
+  margin:12px 0;
+}
 </style>
 </head>
 
@@ -44,6 +99,7 @@ hr { border:0; border-top:1px solid #333; margin:10px 0; }
 <div class="container">
 
 <h2>CounterForge PRO</h2>
+<div class="small">Draft intelligence system</div>
 
 <input id="search" placeholder="Search champion..." oninput="filter()">
 
@@ -73,7 +129,7 @@ fetch("https://ddragon.leagueoflegends.com/cdn/14.1.1/data/en_US/champion.json")
 
 
 /* =========================
-   SIMPLE DATA-DRIVEN ENGINE
+   ENGINE (UNCHANGED LOGIC)
 ========================= */
 
 function scoreCounter(enemy, pick){
@@ -92,7 +148,6 @@ function scoreCounter(enemy, pick){
   if (isTank && antiTank.includes(pick)) score += 1.8;
   if (isBruiser && antiBruiser.includes(pick)) score += 1.8;
 
-  // bonus logic
   if (enemy === "Zed" && pick === "Lissandra") score += 1.5;
   if (enemy === "Jax" && pick === "Poppy") score += 1.5;
 
@@ -124,7 +179,7 @@ function getCounters(enemy){
 
 
 /* =========================
-   ANALYZE DRAFT
+   ANALYZE
 ========================= */
 
 function analyze(){
@@ -141,7 +196,7 @@ function analyze(){
   document.getElementById("out").innerHTML = `
     <div class="card">
       <h3>VS ${enemy}</h3>
-      <div class="small">Data-driven counter engine</div>
+      <div class="small">AI-driven draft analysis</div>
 
       <hr>
 
@@ -152,15 +207,15 @@ function analyze(){
 
       <hr>
 
-      <b>BAN</b><br>
+      <b>BAN RECOMMENDATION</b><br>
       <div class="badge">${ban}</div>
 
       <hr>
 
       <div class="small">
         • play for early tempo<br>
-        • deny enemy engage windows<br>
-        • scale safe into mid game
+        • avoid extended fights if behind<br>
+        • punish cooldown windows
       </div>
     </div>
   `;
